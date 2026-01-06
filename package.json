@@ -1,0 +1,20 @@
+{
+  "name": "spotify-kiosk",
+  "version": "1.0.0",
+  "description": "Spotify Now Playing Kiosk Display",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "spotify",
+    "kiosk",
+    "display"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.3.1"
+  }
+}
+
