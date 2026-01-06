@@ -8,4 +8,4 @@ kiosk-setup.sh
 start.sh
 get-*.html
 get-*.js
-
+docker-compose.yml
