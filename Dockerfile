@@ -3,8 +3,11 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files (if we add dependencies later)
+# Copy package files
 COPY package*.json ./
+
+# Install dependencies
+RUN npm install
 
 # Copy application files
 COPY index.html styles.css script.js server.js ./

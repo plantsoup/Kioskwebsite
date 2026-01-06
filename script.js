@@ -48,26 +48,32 @@ function updateStatus(type, text) {
 // Update the display with track information
 function updateDisplay(trackData) {
     if (!trackData || !trackData.is_playing) {
-        // No track currently playing - show last track
-        if (lastTrackData && lastTrackData.item) {
-            const lastTrack = lastTrackData.item;
-            trackTitle.textContent = lastTrack.name;
-            artistName.textContent = lastTrack.artists.map(a => a.name).join(', ');
-            albumName.textContent = lastTrack.album.name;
+        // Check if we have track data to display (even if not playing)
+        const trackToShow = (trackData && trackData.item) ? trackData.item : (lastTrackData && lastTrackData.item ? lastTrackData.item : null);
+        
+        if (trackToShow) {
+            trackTitle.textContent = trackToShow.name;
+            artistName.textContent = trackToShow.artists.map(a => a.name).join(', ');
+            albumName.textContent = trackToShow.album.name;
             
-            // Keep the last album art
-            const artUrl = lastTrack.album.images[0]?.url || '';
+            // Update album art
+            const artUrl = trackToShow.album.images[0]?.url || '';
             if (albumArt.src !== artUrl && artUrl) {
                 albumArt.src = artUrl;
                 backgroundArt.style.backgroundImage = `url(${artUrl})`;
             }
             
-            // Show progress at 100% for last track
+            // Show progress at 100% for paused/not playing track
             progressFill.style.width = '100%';
-            const duration = lastTrack.duration_ms || 0;
+            const duration = trackToShow.duration_ms || 0;
             timeElapsed.textContent = formatTime(duration);
             timeTotal.textContent = formatTime(duration);
             updateStatus('error', 'Paused');
+            
+            // Store as lastTrackData if not already stored
+            if (trackData && trackData.item) {
+                lastTrackData = trackData;
+            }
             return;
         } else {
             // No track and no last track
@@ -115,6 +121,31 @@ function updateDisplay(trackData) {
     updateStatus('', 'Playing');
 }
 
+// Get recently played track
+async function getRecentlyPlayed() {
+    try {
+        const response = await fetch(`${API_BASE}/api/recently-played`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        
+        // Format the recently played track to match currently-playing format
+        if (data.items && data.items.length > 0) {
+            const recentTrack = data.items[0].track;
+            return {
+                item: recentTrack,
+                is_playing: false,
+                progress_ms: recentTrack.duration_ms || 0
+            };
+        }
+        return null;
+    } catch (error) {
+        console.error('Error fetching recently played:', error);
+        return null;
+    }
+}
+
 // Get currently playing track
 async function getCurrentlyPlaying() {
     try {
@@ -122,6 +153,18 @@ async function getCurrentlyPlaying() {
         
         if (response.status === 204 || response.status === 200) {
             const data = response.status === 204 ? null : await response.json();
+            
+            // If nothing is playing and we don't have last track data, fetch recently played
+            if (!data && !lastTrackData) {
+                const recentTrack = await getRecentlyPlayed();
+                if (recentTrack) {
+                    // Store as lastTrackData so updateDisplay can use it
+                    lastTrackData = recentTrack;
+                    updateDisplay(recentTrack);
+                    return;
+                }
+            }
+            
             updateDisplay(data);
         } else {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -141,7 +184,24 @@ function updateProgress() {
 // Initialize
 async function init() {
     // Get initial track
-    await getCurrentlyPlaying();
+    const response = await fetch(`${API_BASE}/api/currently-playing`);
+    
+    if (response.status === 204) {
+        // Nothing currently playing - fetch recently played
+        const recentTrack = await getRecentlyPlayed();
+        if (recentTrack) {
+            // Store as lastTrackData so updateDisplay can use it
+            lastTrackData = recentTrack;
+            updateDisplay(recentTrack);
+        } else {
+            updateDisplay(null);
+        }
+    } else if (response.status === 200) {
+        const data = await response.json();
+        updateDisplay(data);
+    } else {
+        updateDisplay(null);
+    }
 
     // Update every 2 seconds
     setInterval(getCurrentlyPlaying, 2000);

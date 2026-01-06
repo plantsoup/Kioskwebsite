@@ -9,9 +9,9 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - SPOTIFY_CLIENT_ID=2d17aed704704ebab480d8a614e2329b
-      - SPOTIFY_CLIENT_SECRET=15b12a31ecfd461393d8851cd50c54f2
-      - SPOTIFY_REFRESH_TOKEN=AQD4TUmUxwKRVvSJpe3QpwIFrXHp68eUjiDX-li5NfTcqP25OHkH1ZCpkSNTMdRPpyKbIiK0CubKfX3o_w2ucJtsU-Gf9PdamvKbS7fu1RvoyGaDrnciXUglX9TTCFnIZSI
+      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
+      - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
+      - SPOTIFY_REFRESH_TOKEN=${SPOTIFY_REFRESH_TOKEN}
     networks:
       - default
 

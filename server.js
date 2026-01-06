@@ -145,6 +145,18 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    if (req.url === '/api/recently-played') {
+        try {
+            const data = await proxySpotifyAPI('/v1/me/player/recently-played?limit=1');
+            res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify(data), 'utf-8');
+        } catch (error) {
+            res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ error: error.message }), 'utf-8');
+        }
+        return;
+    }
+
     // Serve static files
     let filePath = '.' + req.url;
     if (filePath === './') {
